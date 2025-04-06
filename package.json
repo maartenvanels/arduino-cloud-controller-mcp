@@ -1,0 +1,31 @@
+{
+  "name": "arduino-cloud-controller-mcp",
+  "version": "1.0.0",
+  "description": "Arduino Cloud Controller MCP for Cursor",
+  "main": "mcp-server.js",
+  "scripts": {
+    "start": "node mcp-server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "arduino",
+    "cloud",
+    "iot",
+    "mcp",
+    "cursor",
+    "smart-home"
+  ],
+  "author": "Open Source Contributors",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/maartenvanels/arduino-cloud-controller-mcp"
+  },
+  "engines": {
+    "node": ">=12.0.0"
+  },
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "node-fetch": "^2.6.12"
+  }
+} 
