@@ -32,18 +32,26 @@ class ArduinoCloudClient {
 
   async authenticate() {
     try {
-      const auth = Buffer.from(`${this.clientId}:${this.clientSecret}`).toString('base64');
+      const now = Date.now();
+      
+      // Bouw formdata op met de juiste parameters
+      const formData = new URLSearchParams();
+      formData.append('grant_type', 'client_credentials');
+      formData.append('audience', 'https://api2.arduino.cc/iot');
+      formData.append('client_id', this.clientId);
+      formData.append('client_secret', this.clientSecret);
+      
       const response = await fetch('https://api2.arduino.cc/iot/v1/clients/token', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Authorization': `Basic ${auth}`
+          'Content-Type': 'application/x-www-form-urlencoded'
         },
-        body: 'grant_type=client_credentials&audience=https://api2.arduino.cc/iot'
+        body: formData
       });
 
       if (!response.ok) {
-        throw new Error(`Authentication failed: ${response.status} ${response.statusText}`);
+        const errorText = await response.text();
+        throw new Error(`Authentication failed: ${response.status} ${response.statusText}\n${errorText}`);
       }
 
       const data = await response.json();
