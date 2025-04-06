@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+  arduino-mcp:
+    build: .
+    container_name: arduino-cloud-mcp
+    ports:
+      - "3000:3000"
+    environment:
+      - ARDUINO_CLIENT_ID=${ARDUINO_CLIENT_ID}
+      - ARDUINO_CLIENT_SECRET=${ARDUINO_CLIENT_SECRET}
+      - MCP_SERVER_MODE=true
+    restart: unless-stopped
+    volumes:
+      - ./logs:/usr/src/app/logs 
