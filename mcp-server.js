@@ -22,13 +22,13 @@ if (!process.env.ARDUINO_CLIENT_ID || !process.env.ARDUINO_CLIENT_SECRET) {
   process.exit(1);
 }
 
-// Display available MCP functions
-console.log('Arduino Cloud Controller MCP loaded successfully.');
-console.log(`Configured for API client ID: ${process.env.ARDUINO_CLIENT_ID.substring(0, 5)}...`);
-console.log('\nAvailable MCP functions:');
+// Display available MCP functions (to stderr for logs)
+console.error('Arduino Cloud Controller MCP loaded successfully.');
+console.error(`Configured for API client ID: ${process.env.ARDUINO_CLIENT_ID.substring(0, 5)}...`);
+console.error('\nAvailable MCP functions:');
 ArduinoCloudController.functions.forEach(fn => {
   const params = fn.parameters.map(p => p.required ? `${p.name}*` : p.name).join(', ');
-  console.log(`- mcp_arduino_cloud_controller_${fn.name}(${params})`);
+  console.error(`- mcp_arduino_cloud_controller_${fn.name}(${params})`);
 });
 
 // Start HTTP server for MCP when in server mode
@@ -106,8 +106,8 @@ if (process.env.MCP_SERVER_MODE === 'true') {
   });
   
   server.listen(PORT, () => {
-    console.log(`\nMCP server running on port ${PORT}`);
-    console.log(`Endpoint: http://localhost:${PORT}/execute`);
+    console.error(`\nMCP server running on port ${PORT}`);
+    console.error(`Endpoint: http://localhost:${PORT}/execute`);
   });
   
   // Handle server errors
@@ -116,8 +116,46 @@ if (process.env.MCP_SERVER_MODE === 'true') {
     process.exit(1);
   });
 } else {
-  console.log('\nRunning in standalone mode. Use module exports to integrate with your application.');
-  console.log('Set MCP_SERVER_MODE=true in your .env file to enable server mode.');
+  // In standalone mode (Cursor integration via stdin/stdout)
+  // Detect if this is stdin/stdout mode and prepare to handle input/output
+  if (process.stdin.isTTY === undefined) {
+    // Process MCP call from stdin
+    let inputData = '';
+    
+    process.stdin.on('data', (chunk) => {
+      inputData += chunk.toString();
+    });
+    
+    process.stdin.on('end', async () => {
+      try {
+        const request = JSON.parse(inputData);
+        const { functionName, params } = request;
+        
+        // Remove the 'mcp_arduino_cloud_controller_' prefix
+        const mcpFunctionName = functionName.replace('mcp_arduino_cloud_controller_', '');
+        
+        // Find the requested function
+        const mcpFunction = ArduinoCloudController.functions.find(fn => fn.name === mcpFunctionName);
+        
+        if (!mcpFunction) {
+          console.log(JSON.stringify({ error: `Function '${mcpFunctionName}' not found` }));
+          process.exit(1);
+        }
+        
+        // Execute the function and return result as JSON to stdout
+        const result = await mcpFunction.handler(params || {});
+        console.log(JSON.stringify({ result }));
+        process.exit(0);
+      } catch (error) {
+        console.error('Error processing stdin request:', error);
+        console.log(JSON.stringify({ error: error.message }));
+        process.exit(1);
+      }
+    });
+  } else {
+    console.error('\nRunning in standalone mode. Use module exports to integrate with your application.');
+    console.error('Set MCP_SERVER_MODE=true in your .env file to enable server mode.');
+  }
 }
 
 // Export the MCP for use by other modules
