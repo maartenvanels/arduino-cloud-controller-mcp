@@ -39,4 +39,12 @@ Thumbs.db
 
 # Docker
 docker-compose.override.yml
-logs/ 
+logs/
+
+# Test files and files with sensitive data
+control-light.js
+test.js
+test-*.js
+smart-home-control.js
+arduino_cloud_mcp.js
+index.js 
