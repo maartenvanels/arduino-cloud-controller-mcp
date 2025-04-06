@@ -1,6 +1,6 @@
 # Arduino Cloud Controller MCP
 
-An MCP for interacting with the Arduino IoT Cloud platform. This MCP allows you to discover and control Arduino IoT Cloud devices, things, and properties from Cursor or any other MCP-compatible platform.
+A Model Context Protocol (MCP) implementation for interacting with the Arduino IoT Cloud platform. This MCP allows you to discover and control Arduino IoT Cloud devices, things, and properties from Cursor or any other MCP-compatible platform.
 
 ## Features
 
@@ -10,6 +10,10 @@ An MCP for interacting with the Arduino IoT Cloud platform. This MCP allows you 
 - Control property values (turn lights on/off, adjust brightness, read sensors, etc.)
 - Find things and properties by name
 - Toggle boolean properties or light switches
+- Enhanced support for dimmed lights (HOME_DIMMED_LIGHT) with intelligent handling of switch state and brightness
+- Improved error handling and logging for better debugging
+- Fully compatible with the [Model Context Protocol](https://modelcontextprotocol.io) specification
+- Uses stdio transport for direct communication with Cursor
 
 ## Installation
 
@@ -34,6 +38,14 @@ An MCP for interacting with the Arduino IoT Cloud platform. This MCP allows you 
 
 4. Edit the `.env` file and add your Arduino IoT Cloud API credentials (client ID and client secret)
 
+## Running Locally
+
+You can run the MCP directly via Node.js locally:
+
+```
+node mcp-arduino-cloud.js
+```
+
 ## Running as Docker Container
 
 You can run this MCP in a Docker container:
@@ -41,70 +53,105 @@ You can run this MCP in a Docker container:
 1. Build the Docker image:
 
    ```
-   docker-compose build
+   docker build -t arduino-cloud-mcp .
    ```
 
-2. Run the container:
+2. Run the container with interactive mode to support stdio:
 
    ```
-   docker-compose up -d
+   docker run -i --rm -e ARDUINO_CLIENT_ID=your_client_id -e ARDUINO_CLIENT_SECRET=your_client_secret arduino-cloud-mcp
    ```
-
-The MCP will be available at http://localhost:3000/execute
 
 ## Configuring in Cursor
 
-You can configure the Arduino Cloud Controller MCP in Cursor in two ways:
+### MCP Configuration File Location
 
-### Option 1: Using HTTP endpoint (Recommended if Docker container is already running)
+The MCP configuration file (`mcp.json`) in Cursor is located at:
 
-1. Open Cursor
-2. Go to Settings > Extensions
-3. Navigate to the MCPs section
-4. Locate your `mcp.json` file (typically in `~/.cursor/mcp.json`)
-5. Add the following configuration:
+- Windows: `%USERPROFILE%\.cursor\mcp.json`
+- macOS: `~/.cursor/mcp.json`
+- Linux: `~/.cursor/mcp.json`
+
+If the file doesn't exist yet, you can create it.
+
+### Complete Configuration Examples
+
+#### Option A: Node.js Integration
+
+Here's a complete example of an `mcp.json` file using Node.js:
 
 ```json
-"arduino_cloud_controller": {
-  "type": "http",
-  "transport": {
-    "url": "http://localhost:3000/execute",
-    "method": "POST"
+{
+  "mcps": {
+    "arduino_cloud_controller": {
+      "command": "node",
+      "args": ["/absolute/path/to/mcp-arduino-cloud.js"],
+      "env": {
+        "ARDUINO_CLIENT_ID": "your_arduino_cloud_client_id",
+        "ARDUINO_CLIENT_SECRET": "your_arduino_cloud_client_secret"
+      }
+    }
   }
 }
 ```
 
-### Option 2: Using Docker Container
-
-1. Open Cursor
-2. Go to Settings > Extensions
-3. Navigate to the MCPs section
-4. Locate your `mcp.json` file
-5. Add the following configuration:
+For Windows:
 
 ```json
-"arduino_cloud_controller": {
-  "command": "docker",
-  "args": [
-    "run",
-    "-i",
-    "--rm",
-    "-e",
-    "ARDUINO_CLIENT_ID",
-    "-e",
-    "ARDUINO_CLIENT_SECRET",
-    "-p",
-    "3000:3000",
-    "arduino-arduino-mcp"
-  ],
-  "env": {
-    "ARDUINO_CLIENT_ID": "your_arduino_cloud_client_id",
-    "ARDUINO_CLIENT_SECRET": "your_arduino_cloud_client_secret"
+{
+  "mcps": {
+    "arduino_cloud_controller": {
+      "command": "node",
+      "args": ["D:\\path\\to\\mcp-arduino-cloud.js"],
+      "env": {
+        "ARDUINO_CLIENT_ID": "your_arduino_cloud_client_id",
+        "ARDUINO_CLIENT_SECRET": "your_arduino_cloud_client_secret"
+      }
+    }
   }
 }
 ```
 
-Replace `your_arduino_cloud_client_id` and `your_arduino_cloud_client_secret` with your actual credentials.
+#### Option B: Docker Container Integration
+
+Here's a complete example of an `mcp.json` file using Docker:
+
+```json
+{
+  "mcps": {
+    "arduino_cloud_controller": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "ARDUINO_CLIENT_ID=your_arduino_cloud_client_id",
+        "-e",
+        "ARDUINO_CLIENT_SECRET=your_arduino_cloud_client_secret",
+        "arduino-cloud-mcp"
+      ]
+    }
+  }
+}
+```
+
+> **Important Notes**:
+>
+> - The `-i` flag is critical for stdio transport - it enables interactive mode in Docker, allowing standard input/output to be properly piped between Cursor and the MCP.
+> - Replace `your_arduino_cloud_client_id` and `your_arduino_cloud_client_secret` with your actual credentials.
+> - For absolute paths, use the appropriate format for your operating system.
+
+### Testing the Configuration
+
+After adding the configuration:
+
+1. Restart Cursor
+2. Open a new file
+3. Test with a simple command like:
+   ```javascript
+   await mcp_arduino_cloud_controller_list_things();
+   ```
 
 ## Arduino IoT Cloud Setup
 
@@ -203,6 +250,8 @@ console.log("Light state:", currentState);
 
 ## Technical Details
 
-This MCP uses the Arduino IoT Cloud REST API to interact with devices and properties. It handles OAuth 2.0 authentication automatically and refreshes tokens as needed.
+This MCP uses the official Arduino IoT Cloud REST API with authentication. It handles token management and renewal automatically.
+
+The tool is built with Node.js and implements the MCP protocol as specified in the [Model Context Protocol](https://modelcontextprotocol.io) specification.
 
 For more details on the Arduino IoT Cloud API, see the [official documentation](https://www.arduino.cc/reference/en/iot/api/).

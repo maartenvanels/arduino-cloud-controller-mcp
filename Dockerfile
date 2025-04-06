@@ -1,31 +1,32 @@
 FROM node:16-alpine AS builder
 
+# Create app directory
 WORKDIR /app
 
-# Copy package files
+# Copy package.json and package-lock.json
 COPY package*.json ./
 
 # Install dependencies
 RUN npm install
 
-# Copy application code
-COPY arduino-cloud-controller-mcp.js ./
-COPY mcp-server.js ./
+# Copy source files
+COPY mcp-arduino-cloud.js ./
 
+# Use a smaller image for production
 FROM node:16-alpine AS release
 
+# Create app directory
 WORKDIR /app
 
 # Copy only necessary files from builder
-COPY --from=builder /app/arduino-cloud-controller-mcp.js ./
-COPY --from=builder /app/mcp-server.js ./
+COPY --from=builder /app/mcp-arduino-cloud.js ./
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/package-lock.json ./
 COPY --from=builder /app/node_modules ./node_modules
 
-# Set environment variables
-ENV NODE_ENV=production
-ENV MCP_SERVER_MODE=true
+# Run as non-root user
+RUN adduser -D mcpuser
+USER mcpuser
 
-# Use ENTRYPOINT instead of CMD
-ENTRYPOINT ["node", "mcp-server.js"] 
+# Start the MCP server using ENTRYPOINT instead of CMD for stdio transport
+ENTRYPOINT ["node", "mcp-arduino-cloud.js"] 
