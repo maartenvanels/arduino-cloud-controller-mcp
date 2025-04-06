@@ -16,7 +16,7 @@ An MCP for interacting with the Arduino IoT Cloud platform. This MCP allows you 
 1. Clone this repository:
 
    ```
-   git clone https://github.com/yourusername/arduino-cloud-controller-mcp.git
+   git clone https://github.com/maartenvanels/arduino-cloud-controller-mcp.git
    cd arduino-cloud-controller-mcp
    ```
 
@@ -33,6 +33,78 @@ An MCP for interacting with the Arduino IoT Cloud platform. This MCP allows you 
    ```
 
 4. Edit the `.env` file and add your Arduino IoT Cloud API credentials (client ID and client secret)
+
+## Running as Docker Container
+
+You can run this MCP in a Docker container:
+
+1. Build the Docker image:
+
+   ```
+   docker-compose build
+   ```
+
+2. Run the container:
+
+   ```
+   docker-compose up -d
+   ```
+
+The MCP will be available at http://localhost:3000/execute
+
+## Configuring in Cursor
+
+You can configure the Arduino Cloud Controller MCP in Cursor in two ways:
+
+### Option 1: Using HTTP endpoint (Recommended if Docker container is already running)
+
+1. Open Cursor
+2. Go to Settings > Extensions
+3. Navigate to the MCPs section
+4. Locate your `mcp.json` file (typically in `~/.cursor/mcp.json`)
+5. Add the following configuration:
+
+```json
+"arduino_cloud_controller": {
+  "type": "http",
+  "transport": {
+    "url": "http://localhost:3000/execute",
+    "method": "POST"
+  }
+}
+```
+
+### Option 2: Using Docker Container
+
+1. Open Cursor
+2. Go to Settings > Extensions
+3. Navigate to the MCPs section
+4. Locate your `mcp.json` file
+5. Add the following configuration:
+
+```json
+"arduino_cloud_controller": {
+  "command": "docker",
+  "args": [
+    "run",
+    "-i",
+    "--rm",
+    "-e",
+    "ARDUINO_CLIENT_ID",
+    "-e",
+    "ARDUINO_CLIENT_SECRET",
+    "-p",
+    "3000:3000",
+    "arduino-arduino-mcp"
+  ],
+  "env": {
+    "ARDUINO_CLIENT_ID": "your_arduino_cloud_client_id",
+    "ARDUINO_CLIENT_SECRET": "your_arduino_cloud_client_secret"
+  }
+}
+```
+
+Replace `your_arduino_cloud_client_id` and `your_arduino_cloud_client_secret` with your actual credentials.
 
 ## Arduino IoT Cloud Setup
 
