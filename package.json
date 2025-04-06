@@ -1,20 +1,24 @@
 {
-  "name": "arduino-cloud-controller-mcp",
+  "name": "arduino-cloud-mcp",
   "version": "1.0.0",
-  "description": "Arduino Cloud Controller MCP for Cursor",
+  "description": "Arduino Cloud Controller for Model Context Protocol",
   "main": "mcp-arduino-cloud.js",
   "type": "module",
   "scripts": {
     "start": "node mcp-arduino-cloud.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node mcp-arduino-cloud.js --test",
+    "list-devices": "node mcp-arduino-cloud.js --test list-devices",
+    "list-things": "node mcp-arduino-cloud.js --test list-things",
+    "dev": "nodemon mcp-arduino-cloud.js",
+    "test:office": "node test/office-light.js",
+    "control:office": "node test/control-office-light.js"
   },
   "keywords": [
     "arduino",
-    "cloud",
     "iot",
+    "cloud",
     "mcp",
-    "cursor",
-    "smart-home"
+    "model-context-protocol"
   ],
   "author": "Open Source Contributors",
   "license": "MIT",
@@ -26,8 +30,11 @@
     "node": ">=16.0.0"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "1.0.1",
-    "dotenv": "^16.3.1",
-    "node-fetch": "^2.6.12"
+    "@modelcontextprotocol/sdk": "0.1.5",
+    "dotenv": "16.0.3",
+    "node-fetch": "3.3.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22"
   }
 }
